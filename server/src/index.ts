@@ -1,19 +1,48 @@
 import express from "express";
 import cors from "cors";
 
+import authRoutes from "./routes/auth.routes";
+import worldRoutes from "./routes/world.routes";
+import speciesRoutes from "./routes/species.routes";
+import mutationRoutes
+from "./routes/mutation.routes";
+import evolutionRoutes
+from "./routes/evolution.routes";
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(
+  "/api/species",
+  speciesRoutes
+);
+app.use(
+  "/api/mutations",
+  mutationRoutes
+);
+app.use(
+  "/api/evolution",
+  evolutionRoutes
+);
 
 app.get("/", (req, res) => {
   res.json({
-    message: "EvoVerse Backend Running"
+    message: "EvoVerse Backend Running",
   });
 });
+
+app.use("/api/auth", authRoutes);
+
+app.use(
+  "/api/worlds",
+  worldRoutes
+);
 
 const PORT = 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(
+    `Server running on port ${PORT}`
+  );
 });

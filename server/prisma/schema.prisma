@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+
+  worlds    World[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model World {
+  id                String   @id @default(uuid())
+
+  name              String
+
+  planetType        String
+  temperature       Int
+  waterLevel        Int
+  oxygenLevel       Int
+
+  currentYear       Int      @default(0)
+  currentEra        String   @default("Primitive")
+
+  disasterFrequency Int      @default(10)
+
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+
+  species           Species[]
+
+  history           EvolutionHistory[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Species {
+  id            String   @id @default(uuid())
+
+  name          String
+  population    Int      @default(100)
+
+  worldId       String
+  world         World    @relation(fields: [worldId], references: [id])
+
+  dna           DNA?
+
+  mutations     MutationEvent[]
+
+  civilization  Civilization?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DNA {
+  id            String   @id @default(uuid())
+
+  strength      Int
+  intelligence  Int
+  speed         Int
+  adaptability  Int
+  aggression    Int
+  lifespan      Int
+
+  speciesId     String   @unique
+  species       Species  @relation(fields: [speciesId], references: [id])
+
+  createdAt     DateTime @default(now())
+}
+
+model MutationEvent {
+  id          String   @id @default(uuid())
+
+  trait       String
+
+  oldValue    Int
+  newValue    Int
+  change      Int
+
+  speciesId   String
+  species     Species @relation(fields: [speciesId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model EvolutionHistory {
+  id          String   @id @default(uuid())
+
+  year        Int
+
+  description String
+
+  worldId     String
+  world       World @relation(fields: [worldId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model Civilization {
+  id          String   @id @default(uuid())
+
+  stage       String
+
+  speciesId   String   @unique
+  species     Species @relation(fields: [speciesId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
