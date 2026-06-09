@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma";
 import { mutateSpecies } from "./mutation.service";
+import { triggerDisaster } from "./disaster.service";
 
 export const runEvolution = async (
   worldId: string,
@@ -28,27 +29,34 @@ export const runEvolution = async (
   }
 
   for (
-    let year = 1;
-    year <= years;
-    year++
+    const species of world.species
   ) {
 
+    if (!species.dna) continue;
+
+    let currentPopulation =
+      species.population;
+
     for (
-      const species of world.species
+      let year = 1;
+      year <= years;
+      year++
     ) {
 
-      if (!species.dna) continue;
+      // -------------------------
+      // Population Growth
+      // -------------------------
 
       const growth =
         species.dna.adaptability / 20 +
         species.dna.intelligence / 40 -
         species.dna.aggression / 30;
 
-      const newPopulation =
+      currentPopulation =
         Math.max(
           1,
           Math.floor(
-            species.population + growth
+            currentPopulation + growth
           )
         );
 
@@ -59,9 +67,38 @@ export const runEvolution = async (
 
         data: {
           population:
-            newPopulation,
+            currentPopulation,
         },
       });
+
+      // -------------------------
+      // Disaster Chance
+      // -------------------------
+
+      if (
+        Math.random() <
+        world.disasterFrequency / 100
+      ) {
+
+        const disaster =
+          await triggerDisaster(
+            worldId,
+            species.id,
+            currentPopulation,
+            world.currentYear + year
+          );
+
+        currentPopulation =
+          disaster.remainingPopulation;
+
+        events.push(
+          `Year ${year}: ${disaster.disaster} killed ${disaster.loss} population`
+        );
+      }
+
+      // -------------------------
+      // Mutation Chance
+      // -------------------------
 
       if (
         Math.random() < 0.30
@@ -72,27 +109,41 @@ export const runEvolution = async (
             species.id
           );
 
+        const description =
+          `${species.name} mutated in ${mutation.trait}`;
+
         events.push(
-          `Year ${year}: ${species.name} mutation in ${mutation.trait}`
+          `Year ${year}: ${description}`
         );
+
+        await prisma.evolutionHistory.create({
+          data: {
+            worldId,
+            year:
+              world.currentYear + year,
+            description,
+          },
+        });
       }
 
-      if (
-        species.dna.intelligence > 70 &&
-        Math.random() <
-          species.dna.intelligence /
-            1000
-      ) {
+      // -------------------------
+      // Civilization Progression
+      // -------------------------
 
-        const exists =
-          await prisma.civilization.findUnique({
-            where: {
-              speciesId:
-                species.id,
-            },
-          });
+      const civilization =
+        await prisma.civilization.findUnique({
+          where: {
+            speciesId:
+              species.id,
+          },
+        });
 
-        if (!exists) {
+      if (!civilization) {
+
+        if (
+          species.dna.intelligence >= 5 &&
+          currentPopulation >= 150
+        ) {
 
           await prisma.civilization.create({
             data: {
@@ -101,16 +152,144 @@ export const runEvolution = async (
 
               stage:
                 "Tribal",
+
+              populationAtFormation:
+                currentPopulation,
             },
           });
 
+          const description =
+            `${species.name} formed a Tribal Civilization`;
+
           events.push(
-            `Year ${year}: ${species.name} formed a civilization`
+            `Year ${year}: ${description}`
           );
+
+          await prisma.evolutionHistory.create({
+            data: {
+              worldId,
+              year:
+                world.currentYear + year,
+              description,
+            },
+          });
+        }
+      }
+      else {
+
+        let nextStage:
+          string | null =
+          null;
+
+        if (
+          civilization.stage ===
+            "Tribal" &&
+          species.dna.intelligence >= 40 &&
+          currentPopulation >= 500
+        ) {
+          nextStage =
+            "Village";
+        }
+
+        else if (
+          civilization.stage ===
+            "Village" &&
+          species.dna.intelligence >= 60 &&
+          currentPopulation >= 1000
+        ) {
+          nextStage =
+            "Kingdom";
+        }
+
+        else if (
+          civilization.stage ===
+            "Kingdom" &&
+          species.dna.intelligence >= 75 &&
+          currentPopulation >= 2500
+        ) {
+          nextStage =
+            "Empire";
+        }
+
+        else if (
+          civilization.stage ===
+            "Empire" &&
+          species.dna.intelligence >= 90 &&
+          currentPopulation >= 5000
+        ) {
+          nextStage =
+            "Advanced Civilization";
+        }
+
+        if (nextStage) {
+
+          await prisma.civilization.update({
+            where: {
+              id:
+                civilization.id,
+            },
+
+            data: {
+              stage:
+                nextStage,
+            },
+          });
+
+          const description =
+            `${species.name} advanced to ${nextStage}`;
+
+          events.push(
+            `Year ${year}: ${description}`
+          );
+
+          await prisma.evolutionHistory.create({
+            data: {
+              worldId,
+              year:
+                world.currentYear + year,
+              description,
+            },
+          });
         }
       }
     }
   }
 
-  return events;
+  await prisma.world.update({
+    where: {
+      id: worldId,
+    },
+
+    data: {
+      currentYear:
+        world.currentYear + years,
+    },
+  });
+
+  return {
+    worldId,
+    yearsSimulated: years,
+
+    newCurrentYear:
+      world.currentYear + years,
+
+    events,
+  };
 };
+
+export const getEvolutionHistory =
+  async (
+    worldId: string
+  ) => {
+
+    return prisma.evolutionHistory.findMany({
+      where: {
+        worldId,
+      },
+
+      orderBy: {
+        year: "asc",
+      },
+    });
+
+  };

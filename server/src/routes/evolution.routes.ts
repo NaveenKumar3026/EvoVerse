@@ -7,9 +7,16 @@ import {
 
 import {
   runEvolutionHandler,
+  getHistoryHandler,
 } from "../controllers/evolution.controller";
 
 const router = Router();
+
+router.get(
+  "/history/:worldId",
+  authenticate,
+  getHistoryHandler
+);
 
 router.post(
   "/run/:worldId",

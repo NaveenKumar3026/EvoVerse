@@ -5,7 +5,40 @@ import {
 
 import {
   runEvolution,
+  getEvolutionHistory,
 } from "../services/evolution.service";
+
+export const getHistoryHandler =
+  async (
+    req: Request,
+    res: Response
+  ) => {
+
+    try {
+
+      const history =
+        await getEvolutionHistory(
+          req.params.worldId as string
+        );
+
+      res.json({
+        success: true,
+        history,
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to load history",
+      });
+
+    }
+
+  };
 
 export const runEvolutionHandler =
   async (
