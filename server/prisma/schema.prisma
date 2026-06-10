@@ -120,6 +120,8 @@ model Civilization {
   speciesId String @unique
   species Species @relation(fields: [speciesId], references: [id])
 
+
+  technology Technology?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -137,4 +139,19 @@ model DisasterEvent {
   world        World @relation(fields: [worldId], references: [id])
 
   createdAt   DateTime @default(now())
+}
+
+model Technology {
+  id String @id @default(uuid())
+
+  level Int @default(1)
+
+  era String @default("Stone Age")
+
+  civilizationId String @unique
+
+  civilization Civilization @relation(fields: [civilizationId],references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
