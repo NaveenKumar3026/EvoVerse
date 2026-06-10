@@ -2,6 +2,8 @@ import { prisma } from "../config/prisma";
 import { mutateSpecies } from "./mutation.service";
 import { triggerDisaster } from "./disaster.service";
 import { advanceTechnology } from "./technology.service";
+import { manageResources }
+from "./resource.service";
 
 export const runEvolution = async (
   worldId: string,
@@ -139,13 +141,30 @@ export const runEvolution = async (
           },
         });
 
-      if (civilization) {
+     if (civilization) {
+
   await advanceTechnology(
     civilization.id,
     species.dna.intelligence,
     worldId,
     world.currentYear + year
   );
+
+  const technology =
+    await prisma.technology.findUnique({
+      where: {
+        civilizationId:
+          civilization.id,
+      },
+    });
+
+  if (technology) {
+
+    await manageResources(
+      civilization.id,
+      technology.level
+    );
+  }
 }
 
       if (!civilization) {
@@ -174,6 +193,11 @@ await advanceTechnology(
   species.dna.intelligence,
   worldId,
   world.currentYear + year
+);
+
+await manageResources(
+  createdCivilization.id,
+  1
 );
 
           const description =

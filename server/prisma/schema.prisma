@@ -120,8 +120,9 @@ model Civilization {
   speciesId String @unique
   species Species @relation(fields: [speciesId], references: [id])
 
-
   technology Technology?
+  resource Resource?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -155,3 +156,21 @@ model Technology {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Resource {
+  id String @id @default(uuid())
+
+  food Int @default(100)
+  wood Int @default(100)
+  stone Int @default(100)
+  metal Int @default(100)
+  energy Int @default(100)
+
+  civilizationId String @unique
+
+  civilization Civilization @relation(fields: [civilizationId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
