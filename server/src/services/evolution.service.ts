@@ -1,6 +1,7 @@
 import { prisma } from "../config/prisma";
 import { mutateSpecies } from "./mutation.service";
 import { triggerDisaster } from "./disaster.service";
+import { advanceTechnology } from "./technology.service";
 
 export const runEvolution = async (
   worldId: string,
@@ -138,6 +139,15 @@ export const runEvolution = async (
           },
         });
 
+      if (civilization) {
+  await advanceTechnology(
+    civilization.id,
+    species.dna.intelligence,
+    worldId,
+    world.currentYear + year
+  );
+}
+
       if (!civilization) {
 
         if (
@@ -145,18 +155,26 @@ export const runEvolution = async (
           currentPopulation >= 150
         ) {
 
-          await prisma.civilization.create({
-            data: {
-              speciesId:
-                species.id,
+          const createdCivilization =
+  await prisma.civilization.create({
+    data: {
+      speciesId:
+        species.id,
 
-              stage:
-                "Tribal",
+      stage:
+        "Tribal",
 
-              populationAtFormation:
-                currentPopulation,
-            },
-          });
+      populationAtFormation:
+        currentPopulation,
+    },
+  });
+
+await advanceTechnology(
+  createdCivilization.id,
+  species.dna.intelligence,
+  worldId,
+  world.currentYear + year
+);
 
           const description =
             `${species.name} formed a Tribal Civilization`;
@@ -223,20 +241,27 @@ export const runEvolution = async (
 
         if (nextStage) {
 
-          await prisma.civilization.update({
-            where: {
-              id:
-                civilization.id,
-            },
+  await prisma.civilization.update({
+    where: {
+      id:
+        civilization.id,
+    },
 
-            data: {
-              stage:
-                nextStage,
-            },
-          });
+    data: {
+      stage:
+        nextStage,
+    },
+  });
 
-          const description =
-            `${species.name} advanced to ${nextStage}`;
+  await advanceTechnology(
+    civilization.id,
+    species.dna.intelligence,
+    worldId,
+    world.currentYear + year
+  );
+
+  const description =
+    `${species.name} advanced to ${nextStage}`;
 
           events.push(
             `Year ${year}: ${description}`
