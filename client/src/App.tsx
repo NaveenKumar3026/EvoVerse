@@ -12,6 +12,8 @@ import Alliances from "./pages/Alliances";
 import Trades from "./pages/Trades";
 import Timeline from "./pages/Timeline";
 import Simulation from "./pages/Simulation";
+import Analytics from "./pages/Analytics";
+import Galaxy from "./pages/Galaxy";
 
 function App() {
 
@@ -27,6 +29,10 @@ function App() {
   <Route
   path="/simulation"
   element={<Simulation />}
+/>
+<Route
+  path="/analytics"
+  element={<Analytics />}
 />
 <Route
   path="/timeline"
@@ -48,6 +54,10 @@ function App() {
 <Route
   path="/wars"
   element={<Wars />}
+/>
+<Route
+  path="/galaxy"
+  element={<Galaxy />}
 />
 
       </Routes>

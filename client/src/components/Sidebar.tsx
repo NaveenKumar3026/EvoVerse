@@ -64,6 +64,20 @@ function Sidebar() {
   ⚡ Simulation
 </Link>
 
+<Link
+  to="/analytics"
+  className="hover:text-cyan-400"
+>
+  📈 Analytics
+</Link>
+
+<Link
+  to="/galaxy"
+  className="flex items-center gap-3 hover:text-cyan-400"
+>
+  🌌 Galaxy
+</Link>
+
       </nav>
     </div>
   );
