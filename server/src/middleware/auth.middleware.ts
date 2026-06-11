@@ -24,18 +24,23 @@ export const authenticate = (
     authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET!
-    );
 
-    req.user = decoded;
+  const decoded = jwt.verify(
+    token,
+    process.env.JWT_SECRET!
+  );
 
-    next();
-  } catch {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid token",
-    });
-  }
+  req.user = decoded;
+
+  next();
+
+} catch (error) {
+
+  console.log("JWT Error:", error);
+
+  return res.status(401).json({
+    success: false,
+    message: "Invalid token",
+  });
+}
 };
