@@ -57,13 +57,14 @@ export const advanceTechnology = async (
       );
 
       await prisma.evolutionHistory.create({
-        data: {
-          worldId,
-          year,
-          description:
-            `Technology era started: ${eras[0]}`,
-        },
-      });
+  data: {
+    worldId,
+    year,
+    eventType: "TECHNOLOGY_STARTED",
+    description:
+      `Technology era started: ${eras[0]}`,
+  },
+});
 
       return technology;
 
@@ -114,13 +115,14 @@ export const advanceTechnology = async (
       );
 
       await prisma.evolutionHistory.create({
-        data: {
-          worldId,
-          year,
-          description:
-            `Civilization entered ${eras[nextLevel - 1]}`,
-        },
-      });
+  data: {
+    worldId,
+    year,
+    eventType: "TECHNOLOGY_ADVANCED",
+    description:
+      `Civilization entered ${eras[nextLevel - 1]}`,
+  },
+});
     }
   }
 

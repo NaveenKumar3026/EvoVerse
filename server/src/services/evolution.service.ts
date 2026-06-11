@@ -4,6 +4,15 @@ import { triggerDisaster } from "./disaster.service";
 import { advanceTechnology } from "./technology.service";
 import { manageResources }
 from "./resource.service";
+import { declareWar } from "./war.service";
+import {
+  createRelationship,
+  updateRelationship,
+} from "./diplomacy.service";
+import { formAlliance }
+from "./alliance.service";
+import { createTrade }
+from "./trade.service";
 
 export const runEvolution = async (
   worldId: string,
@@ -120,13 +129,14 @@ export const runEvolution = async (
         );
 
         await prisma.evolutionHistory.create({
-          data: {
-            worldId,
-            year:
-              world.currentYear + year,
-            description,
-          },
-        });
+  data: {
+    worldId,
+    year:
+      world.currentYear + year,
+    eventType: "MUTATION",
+    description,
+  },
+});
       }
 
       // -------------------------
@@ -164,6 +174,189 @@ export const runEvolution = async (
       civilization.id,
       technology.level
     );
+  }
+
+  // -------------------------
+// Alliance Chance
+// -------------------------
+
+if (
+  Math.random() < 0.02
+) {
+
+  const otherCivilizations =
+    await prisma.civilization.findMany({
+      where: {
+        NOT: {
+          id: civilization.id,
+        },
+      },
+    });
+
+  if (
+    otherCivilizations.length > 0
+  ) {
+
+    const ally =
+      otherCivilizations[
+        Math.floor(
+          Math.random() *
+          otherCivilizations.length
+        )
+      ];
+
+    await formAlliance(
+      civilization.id,
+      ally.id
+    );
+
+    await prisma.evolutionHistory.create({
+      data: {
+        worldId,
+        year:
+          world.currentYear + year,
+
+        eventType:
+          "ALLIANCE",
+
+        description:
+          "Alliance formed",
+      },
+    });
+  }
+}
+
+// -------------------------
+// Trade Chance
+// -------------------------
+
+if (
+  Math.random() < 0.03
+) {
+
+  const traders =
+    await prisma.civilization.findMany({
+      where: {
+        NOT: {
+          id: civilization.id,
+        },
+      },
+    });
+
+  if (
+    traders.length > 0
+  ) {
+
+    const buyer =
+      traders[
+        Math.floor(
+          Math.random() *
+          traders.length
+        )
+      ];
+
+    await createTrade(
+      civilization.id,
+      buyer.id
+    );
+
+    await prisma.evolutionHistory.create({
+      data: {
+        worldId,
+        year:
+          world.currentYear + year,
+
+        eventType:
+          "TRADE",
+
+        description:
+          "Trade agreement established",
+      },
+    });
+  }
+}
+
+  // -------------------------
+  // War Chance
+  // -------------------------
+
+  if (
+    Math.random() < 0.05
+  ) {
+
+    const enemyCivilizations =
+      await prisma.civilization.findMany({
+        where: {
+          NOT: {
+            id: civilization.id,
+          },
+        },
+      });
+
+    if (
+      enemyCivilizations.length > 0
+    ) {
+
+      const defender =
+        enemyCivilizations[
+          Math.floor(
+            Math.random() *
+            enemyCivilizations.length
+          )
+        ];
+
+      const diplomacy =
+  await createRelationship(
+    civilization.id,
+    defender.id
+  );
+
+  await updateRelationship(
+  diplomacy.id,
+  "Hostile"
+);
+
+      const war =
+        await declareWar(
+          civilization.id,
+          defender.id,
+          world.currentYear + year
+        );
+
+        
+
+      const winnerCivilization =
+        await prisma.civilization.findUnique({
+          where: {
+            id: war.winner,
+          },
+
+          include: {
+            species: true,
+          },
+        });
+
+      const description =
+        `${winnerCivilization?.species.name} won a war`;
+
+        events.push(
+  `Year ${year}: Relationship became Hostile`
+);
+
+      events.push(
+        `Year ${year}: ${description}`
+      );
+
+      await prisma.evolutionHistory.create({
+  data: {
+    worldId,
+    year:
+      world.currentYear + year,
+    eventType: "WAR",
+    description,
+  },
+});
+    }
   }
 }
 
@@ -208,13 +401,14 @@ await manageResources(
           );
 
           await prisma.evolutionHistory.create({
-            data: {
-              worldId,
-              year:
-                world.currentYear + year,
-              description,
-            },
-          });
+  data: {
+    worldId,
+    year:
+      world.currentYear + year,
+    eventType: "CIVILIZATION_FORMED",
+    description,
+  },
+});
         }
       }
       else {
@@ -292,13 +486,14 @@ await manageResources(
           );
 
           await prisma.evolutionHistory.create({
-            data: {
-              worldId,
-              year:
-                world.currentYear + year,
-              description,
-            },
-          });
+  data: {
+    worldId,
+    year:
+      world.currentYear + year,
+    eventType: "CIVILIZATION_ADVANCED",
+    description,
+  },
+});
         }
       }
     }

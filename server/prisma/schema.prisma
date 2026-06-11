@@ -102,6 +102,8 @@ model EvolutionHistory {
 
   year        Int
 
+  eventType String @default("GENERAL")
+
   description String
 
   worldId     String
@@ -174,3 +176,49 @@ model Resource {
   updatedAt DateTime @updatedAt
 }
 
+model War {
+  id String @id @default(uuid())
+
+  attackerId String
+  defenderId String
+
+  winner String
+
+  year Int
+
+  createdAt DateTime @default(now())
+}
+
+model Diplomacy {
+  id String @id @default(uuid())
+
+  civilizationAId String
+  civilizationBId String
+
+  relationship String @default("Neutral")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Alliance {
+  id String @id @default(uuid())
+
+  civilizationAId String
+  civilizationBId String
+
+  createdAt DateTime @default(now())
+}
+
+model Trade {
+  id String @id @default(uuid())
+
+  sellerId String
+  buyerId String
+
+  resource String
+
+  amount Int
+
+  createdAt DateTime @default(now())
+}

@@ -8,6 +8,8 @@ import mutationRoutes
 from "./routes/mutation.routes";
 import evolutionRoutes
 from "./routes/evolution.routes";
+import storyRoutes
+from "./routes/story.routes";
 
 const app = express();
 
@@ -25,7 +27,10 @@ app.use(
   "/api/evolution",
   evolutionRoutes
 );
-
+app.use(
+  "/api/story",
+  storyRoutes
+);
 app.get("/", (req, res) => {
   res.json({
     message: "EvoVerse Backend Running",

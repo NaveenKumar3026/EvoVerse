@@ -81,12 +81,13 @@ export const triggerDisaster = async (
   });
 
   await prisma.evolutionHistory.create({
-    data: {
-      worldId,
-      year,
-      description,
-    },
-  });
+  data: {
+    worldId,
+    year,
+    eventType: "DISASTER",
+    description,
+  },
+});
 
   return {
     disaster:
