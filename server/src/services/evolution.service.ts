@@ -13,6 +13,8 @@ import { formAlliance }
 from "./alliance.service";
 import { createTrade }
 from "./trade.service";
+import { createPeaceTreaty }
+from "./peace.service";
 
 export const runEvolution = async (
   worldId: string,
@@ -255,11 +257,19 @@ if (
         )
       ];
 
+
+      console.log(
+  "TRADE ATTEMPT",
+  civilization.id
+);
     await createTrade(
       civilization.id,
       buyer.id
     );
 
+    console.log(
+  "TRADE CREATED"
+);
     await prisma.evolutionHistory.create({
       data: {
         worldId,
@@ -336,8 +346,9 @@ if (
           },
         });
 
-      const description =
-        `${winnerCivilization?.species.name} won a war`;
+     const description =
+  `${winnerCivilization?.species.name} won a war. ` +
+  `Casualties: Winner ${war.winnerLoss}, Loser ${war.loserLoss}`;
 
         events.push(
   `Year ${year}: Relationship became Hostile`
@@ -358,6 +369,58 @@ if (
 });
     }
   }
+
+  // -------------------------
+// Peace Treaty Chance
+// -------------------------
+
+if (
+  Math.random() < 0.03
+) {
+
+  const hostileRelations =
+  await prisma.diplomacy.findMany({
+    where: {
+      relationship: "Hostile",
+    },
+  });
+
+  if (
+    hostileRelations.length > 0
+  ) {
+
+    const relation =
+      hostileRelations[
+        Math.floor(
+          Math.random() *
+          hostileRelations.length
+        )
+      ];
+
+    await createPeaceTreaty(
+      relation.civilizationAId,
+      relation.civilizationBId
+    );
+
+    await prisma.evolutionHistory.create({
+      data: {
+        worldId,
+        year:
+          world.currentYear + year,
+
+        eventType:
+          "GENERAL",
+
+        description:
+          "Peace treaty signed",
+      },
+    });
+
+    events.push(
+      `Year ${year}: Peace treaty signed`
+    );
+  }
+}
 }
 
       if (!civilization) {

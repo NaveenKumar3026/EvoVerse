@@ -62,6 +62,88 @@ export const declareWar =
         ? attackerId
         : defenderId;
 
+    const loser =
+      winner === attackerId
+        ? defenderId
+        : attackerId;
+
+    const winnerCivilization =
+      await prisma.civilization.findUnique({
+        where: {
+          id: winner,
+        },
+
+        include: {
+          species: true,
+        },
+      });
+
+    const loserCivilization =
+      await prisma.civilization.findUnique({
+        where: {
+          id: loser,
+        },
+
+        include: {
+          species: true,
+        },
+      });
+
+    if (
+      !winnerCivilization ||
+      !loserCivilization
+    ) {
+      throw new Error(
+        "Civilization not found"
+      );
+    }
+
+    const winnerLoss =
+      Math.floor(
+        winnerCivilization
+          .species.population * 0.05
+      );
+
+    const loserLoss =
+      Math.floor(
+        loserCivilization
+          .species.population * 0.20
+      );
+
+    await prisma.species.update({
+      where: {
+        id:
+          winnerCivilization.species.id,
+      },
+
+      data: {
+        population:
+          Math.max(
+            1,
+            winnerCivilization
+              .species.population -
+              winnerLoss
+          ),
+      },
+    });
+
+    await prisma.species.update({
+      where: {
+        id:
+          loserCivilization.species.id,
+      },
+
+      data: {
+        population:
+          Math.max(
+            1,
+            loserCivilization
+              .species.population -
+              loserLoss
+          ),
+      },
+    });
+
     await prisma.war.create({
       data: {
         attackerId,
@@ -75,5 +157,18 @@ export const declareWar =
       winner,
       attackerPower,
       defenderPower,
+      winnerLoss,
+      loserLoss,
     };
+  };
+
+export const getWars =
+  async () => {
+
+    return prisma.war.findMany({
+      orderBy: {
+        year: "desc",
+      },
+    });
+
   };

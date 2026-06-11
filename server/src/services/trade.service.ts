@@ -21,3 +21,14 @@ export const createTrade =
       },
     });
   };
+
+  export const getTrades =
+  async () => {
+
+    return prisma.trade.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+  };

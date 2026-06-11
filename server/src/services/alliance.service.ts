@@ -36,3 +36,14 @@ export const formAlliance =
       },
     });
   };
+
+  export const getAlliances =
+  async () => {
+
+    return prisma.alliance.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+  };
