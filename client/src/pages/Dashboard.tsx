@@ -15,6 +15,38 @@ function Dashboard() {
   const [events, setEvents] =
     useState<any[]>([]);
 
+    const getEra = () => {
+
+  if (!analytics)
+    return "Unknown Era";
+
+  const techScore =
+    stats.civilizationCount > 0
+      ? (
+          stats.tradeCount +
+          stats.allianceCount +
+          stats.warCount
+        )
+      : 0;
+
+  if (techScore < 10)
+    return "Primitive Age";
+
+  if (techScore < 25)
+    return "Industrial Age";
+
+  if (techScore < 50)
+    return "Space Age";
+
+  if (techScore < 100)
+    return "Interstellar Age";
+
+  if (techScore < 200)
+    return "Quantum Age";
+
+  return "Transcendent Age";
+};
+
   useEffect(() => {
 
     const worldId =
@@ -93,6 +125,97 @@ function Dashboard() {
         🌌 Galactic Command Center
       </h1>
 
+      <div
+  className="
+  grid
+  md:grid-cols-3
+  gap-6
+  mb-10
+  "
+>
+
+  <div
+    className="
+    bg-slate-900
+    border
+    border-cyan-500/20
+    rounded-xl
+    p-6
+    "
+  >
+    <p className="text-gray-400">
+      Current Galactic Leader
+    </p>
+
+    <h2
+      className="
+      text-2xl
+      font-bold
+      text-cyan-400
+      mt-2
+      "
+    >
+      {analytics.strongestCivilization}
+    </h2>
+  </div>
+
+  <div
+    className="
+    bg-slate-900
+    border
+    border-yellow-500/20
+    rounded-xl
+    p-6
+    "
+  >
+    <p className="text-gray-400">
+      Current Era
+    </p>
+
+    <h2
+      className="
+      text-2xl
+      font-bold
+      text-yellow-400
+      mt-2
+      "
+    >
+      {getEra()}
+    </h2>
+  </div>
+
+  <div
+    className="
+    bg-slate-900
+    border
+    border-green-500/20
+    rounded-xl
+    p-6
+    "
+  >
+    <p className="text-gray-400">
+      Galaxy Stability
+    </p>
+
+    <h2
+      className="
+      text-2xl
+      font-bold
+      text-green-400
+      mt-2
+      "
+    >
+      {
+        stats.warCount >
+        stats.allianceCount
+          ? "Unstable"
+          : "Stable"
+      }
+    </h2>
+  </div>
+
+</div>
+
       {/* Statistics */}
 
       <div
@@ -109,6 +232,11 @@ function Dashboard() {
           title="Current Year"
           value={stats.currentYear}
         />
+
+        <StatCard
+  title="Galactic Era"
+  value={getEra()}
+/>
 
         <StatCard
           title="Species"

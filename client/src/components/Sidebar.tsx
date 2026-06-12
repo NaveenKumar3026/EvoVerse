@@ -5,14 +5,22 @@ function Sidebar() {
     <div
       className="
       w-64
-      min-h-screen
+      h-screen
+      overflow-y-auto
       bg-slate-900
       border-r
       border-slate-800
       p-6
-    "
+      "
     >
-      <h1 className="text-2xl font-bold text-cyan-400 mb-8">
+      <h1
+        className="
+        text-2xl
+        font-bold
+        text-cyan-400
+        mb-8
+        "
+      >
         EvoVerse
       </h1>
 
@@ -60,36 +68,54 @@ function Sidebar() {
           📜 Timeline
         </Link>
 
-        <Link to="/simulation">
-  ⚡ Simulation
-</Link>
+        <Link
+          to="/simulation"
+          className="hover:text-cyan-400"
+        >
+          ⚡ Simulation
+        </Link>
 
-<Link
-  to="/analytics"
-  className="hover:text-cyan-400"
->
-  📈 Analytics
-</Link>
+        <Link
+          to="/analytics"
+          className="hover:text-cyan-400"
+        >
+          📈 Analytics
+        </Link>
 
-<Link
-  to="/galaxy"
-  className="flex items-center gap-3 hover:text-cyan-400"
->
-  🌌 Galaxy
-</Link>
+        <Link
+          to="/galaxy"
+          className="hover:text-cyan-400"
+        >
+          🌌 Galaxy
+        </Link>
 
-<Link
-  to="/story"
-  className="sidebar-link"
->
-  🤖 AI Historian
-</Link>
+        <Link
+          to="/story"
+          className="hover:text-cyan-400"
+        >
+          🤖 AI Historian
+        </Link>
 
-<Link
-  to="/achievements"
->
-  🏆 Achievements
-</Link>
+        <Link
+          to="/achievements"
+          className="hover:text-cyan-400"
+        >
+          🏆 Achievements
+        </Link>
+
+        <Link
+          to="/victory"
+          className="hover:text-cyan-400"
+        >
+          👑 Victory
+        </Link>
+
+        <Link
+          to="/leaderboards"
+          className="hover:text-cyan-400"
+        >
+          🏅 Leaderboards
+        </Link>
 
       </nav>
     </div>

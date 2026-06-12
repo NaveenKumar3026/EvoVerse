@@ -3,7 +3,8 @@ import {
   Routes,
   Route,
 } from "react-router-dom";
-
+import Leaderboards from "./pages/Leaderboards";
+import Victory from "./pages/Victory";
 import Dashboard
 from "./pages/Dashboard";
 import Civilizations from "./pages/Civilizations";
@@ -24,6 +25,11 @@ function App() {
     <BrowserRouter>
 
       <Routes>
+
+        <Route
+  path="/leaderboards"
+  element={<Leaderboards />}
+/>
 
         <Route
   path="/achievements"
@@ -49,6 +55,10 @@ function App() {
 <Route
   path="/timeline"
   element={<Timeline />}
+/>
+<Route
+  path="/victory"
+  element={<Victory />}
 />
 <Route
   path="/trades"

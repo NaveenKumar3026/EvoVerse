@@ -102,6 +102,9 @@ function Galaxy() {
     fetchData();
   }, []);
 
+  console.log("Wars:", wars);
+console.log("Trades:", trades);
+
   return (
     <Layout>
 
@@ -367,7 +370,67 @@ function Galaxy() {
           text-sm
           "
         >
-          Power: {power}
+          <div
+  className={
+    power > 500
+      ? "text-red-400 text-sm"
+      : power > 200
+      ? "text-yellow-400 text-sm"
+      : "text-green-400 text-sm"
+  }
+>
+  Power: {power}
+</div>
+
+<div className="mt-2">
+
+  {power > 500 && (
+    <span
+      className="
+      bg-red-500/20
+      text-red-400
+      px-2
+      py-1
+      rounded
+      text-xs
+      "
+    >
+      DOMINANT EMPIRE
+    </span>
+  )}
+
+  {power > 200 &&
+    power <= 500 && (
+      <span
+        className="
+        bg-yellow-500/20
+        text-yellow-400
+        px-2
+        py-1
+        rounded
+        text-xs
+        "
+      >
+        RISING POWER
+      </span>
+  )}
+
+  {power <= 200 && (
+    <span
+      className="
+      bg-green-500/20
+      text-green-400
+      px-2
+      py-1
+      rounded
+      text-xs
+      "
+    >
+      DEVELOPING
+    </span>
+  )}
+
+</div>
         </div>
 
       </div>
