@@ -19,6 +19,8 @@ import statisticsRoutes
 from "./routes/statistics.routes";
 import analyticsRoutes
 from "./routes/analytics.routes";
+import aiRoutes
+  from "./routes/ai.routes";
 
 const app = express();
 
@@ -35,6 +37,10 @@ app.use(
 app.use(
   "/api/evolution",
   evolutionRoutes
+);
+app.use(
+  "/api/ai",
+  aiRoutes
 );
 app.use(
   "/api/story",

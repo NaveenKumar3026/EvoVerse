@@ -78,6 +78,19 @@ function Sidebar() {
   🌌 Galaxy
 </Link>
 
+<Link
+  to="/story"
+  className="sidebar-link"
+>
+  🤖 AI Historian
+</Link>
+
+<Link
+  to="/achievements"
+>
+  🏆 Achievements
+</Link>
+
       </nav>
     </div>
   );

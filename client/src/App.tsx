@@ -14,6 +14,9 @@ import Timeline from "./pages/Timeline";
 import Simulation from "./pages/Simulation";
 import Analytics from "./pages/Analytics";
 import Galaxy from "./pages/Galaxy";
+import Story from "./pages/Story";
+import Achievements
+  from "./pages/Achievements";
 
 function App() {
 
@@ -21,6 +24,15 @@ function App() {
     <BrowserRouter>
 
       <Routes>
+
+        <Route
+  path="/achievements"
+  element={<Achievements />}
+/>
+        <Route
+  path="/story"
+  element={<Story />}
+/>
 
         <Route
           path="/"

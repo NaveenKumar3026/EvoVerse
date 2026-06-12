@@ -24,6 +24,24 @@ function Galaxy() {
   const [analytics, setAnalytics] =
     useState<any>(null);
 
+     const getSpeciesIcon =
+  (name: string) => {
+
+    if (
+      name.includes("Terran")
+    ) return "🧬";
+
+    if (
+      name.includes("Aurel")
+    ) return "👽";
+
+    if (
+      name.includes("Synth")
+    ) return "🤖";
+
+    return "🌌";
+  };
+
   useEffect(() => {
     const fetchData =
       async () => {
@@ -53,6 +71,8 @@ function Galaxy() {
             await api.get(
               "/trades"
             );
+
+           
 
           setCivilizations(
             civResponse.data.civilizations
@@ -183,77 +203,181 @@ function Galaxy() {
       )}
 
       {/* Civilizations */}
+{/* Galaxy Map */}
 
-      <div
-        className="
-        grid
-        md:grid-cols-2
-        xl:grid-cols-3
-        gap-6
-        "
-      >
-
-        {civilizations.map((civ) => (
-
-          <div
-  key={civ.id}
-  onClick={() =>
-    setSelectedCivilization(civ)
-  }
+<div
   className="
-  bg-slate-900
-  p-8
+  relative
+  h-[900px]
   rounded-xl
   border
   border-cyan-500/20
-  text-center
-  cursor-pointer
-  hover:border-cyan-400
-  hover:scale-105
-  transition
+  bg-slate-950
+  overflow-hidden
+  mb-12
   "
 >
 
-            <div className="text-6xl">
-              {
-                civ.technology?.level >= 8
-                  ? "🪐"
-                  : "🌎"
-              }
-            </div>
+  {/* Stars */}
 
-            <h2
-              className="
-              text-2xl
-              font-bold
-              text-cyan-400
-              mt-4
-              "
-            >
-              {civ.species.name}
-            </h2>
+  {Array.from({ length: 120 }).map(
+    (_, i) => (
 
-            <p className="mt-2">
-              Stage: {civ.stage}
-            </p>
+      <div
+        key={i}
+        className="
+        absolute
+        text-white
+        opacity-40
+        pointer-events-none
+        "
+        style={{
+          left: `${Math.random() * 100}%`,
+          top: `${Math.random() * 100}%`,
+        }}
+      >
+        ✦
+      </div>
 
-            <p>
-              Population:
-              {" "}
-              {civ.species.population}
-            </p>
+    )
+  )}
 
-            <p>
-              Tech Level:
-              {" "}
-              {civ.technology?.level}
-            </p>
+  <svg
+  className="
+  absolute
+  inset-0
+  w-full
+  h-full
+  "
+>
 
-          </div>
+  <line
+    x1="20%"
+    y1="20%"
+    x2="50%"
+    y2="50%"
+    stroke="#00ff88"
+    strokeWidth="2"
+  />
 
-        ))}
+  <line
+    x1="50%"
+    y1="50%"
+    x2="75%"
+    y2="20%"
+    stroke="#00ff88"
+    strokeWidth="2"
+  />
+
+  <line
+    x1="20%"
+    y1="20%"
+    x2="75%"
+    y2="20%"
+    stroke="#ff3333"
+    strokeWidth="3"
+  />
+
+</svg>
+
+  {/* Civilizations */}
+
+  {civilizations.map(
+  (civ, index) => {
+
+    const power =
+      civ.species.population +
+      (civ.technology?.level || 0) * 100;
+
+    const tier =
+      power > 1000
+        ? "Galactic Empire"
+        : power > 500
+        ? "Spacefaring"
+        : "Primitive";
+
+    return (
+
+      <div
+        key={civ.id}
+        onClick={() =>
+          setSelectedCivilization(civ)
+        }
+        className="
+        absolute
+        text-center
+        cursor-pointer
+        hover:scale-110
+        transition
+        "
+        style={{
+          left: `${15 + index * 25}%`,
+          top: `${15 + (index % 2) * 35}%`,
+        }}
+      >
+
+        <div
+          className="
+          text-7xl
+          drop-shadow-lg
+          "
+        >
+          {
+            civ.technology?.level >= 8
+              ? "🚀"
+              : getSpeciesIcon(
+                  civ.species.name
+                )
+          }
+        </div>
+
+        <div
+          className="
+          text-purple-400
+          text-xs
+          uppercase
+          "
+        >
+          {tier}
+        </div>
+
+        <div
+          className="
+          mt-2
+          text-cyan-400
+          font-bold
+          text-xl
+          "
+        >
+          {civ.species.name}
+        </div>
+
+        <div
+          className="
+          text-sm
+          text-gray-400
+          "
+        >
+          Pop: {civ.species.population}
+        </div>
+
+        <div
+          className="
+          text-yellow-400
+          text-sm
+          "
+        >
+          Power: {power}
+        </div>
 
       </div>
+
+    );
+
+  }
+)}
+
+</div>
 
       {/* Wars */}
 
