@@ -1,614 +1,175 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import Layout from "../components/Layout";
-import CivilizationModal from "../components/CivilizationModal";
-
+import HudPanel from "../components/HudPanel";
+import LoadingState from "../components/LoadingState";
+import GalaxyMapCanvas from "../components/GalaxyMapCanvas";
+import { filterWorldCivilizations } from "../utils/gameCalculations";
 
 function Galaxy() {
-  const [civilizations, setCivilizations] =
-    useState<any[]>([]);
+  const navigate = useNavigate();
+  const worldId = localStorage.getItem("worldId");
+  const [galaxy, setGalaxy] = useState<any[]>([]);
+  const [civilizations, setCivilizations] = useState<any[]>([]);
+  const [wars, setWars] = useState<any[]>([]);
+  const [alliances, setAlliances] = useState<any[]>([]);
+  const [trades, setTrades] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [wars, setWars] =
-    useState<any[]>([]);
+  const fetchData = useCallback(async () => {
+    if (!worldId) {
+      setLoading(false);
+      return;
+    }
 
-  const [alliances, setAlliances] =
-    useState<any[]>([]);
+    try {
+      const [galaxyRes, civRes, warsRes, alliancesRes, tradesRes, analyticsRes] =
+        await Promise.all([
+          api.get(`/stars/galaxy/${worldId}`),
+          api.get("/civilizations"),
+          api.get("/wars"),
+          api.get("/alliances"),
+          api.get("/trades"),
+          api.get("/analytics"),
+        ]);
 
-  const [trades, setTrades] =
-    useState<any[]>([]);
-
-    const [selectedCivilization,
-  setSelectedCivilization] =
-    useState<any>(null);
-
-  const [analytics, setAnalytics] =
-    useState<any>(null);
-
-     const getSpeciesIcon =
-  (name: string) => {
-
-    if (
-      name.includes("Terran")
-    ) return "🧬";
-
-    if (
-      name.includes("Aurel")
-    ) return "👽";
-
-    if (
-      name.includes("Synth")
-    ) return "🤖";
-
-    return "🌌";
-  };
+      setGalaxy(galaxyRes.data.galaxy ?? []);
+      setCivilizations(civRes.data.civilizations ?? []);
+      setWars(warsRes.data.wars ?? []);
+      setAlliances(alliancesRes.data.alliances ?? []);
+      setTrades(tradesRes.data.trades ?? []);
+      setAnalytics(analyticsRes.data.analytics);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [worldId]);
 
   useEffect(() => {
-    const fetchData =
-      async () => {
-        try {
-
-          const civResponse =
-            await api.get(
-              "/civilizations"
-            );
-
-          const analyticsResponse =
-            await api.get(
-              "/analytics"
-            );
-
-          const warsResponse =
-            await api.get(
-              "/wars"
-            );
-
-          const alliancesResponse =
-            await api.get(
-              "/alliances"
-            );
-
-          const tradesResponse =
-            await api.get(
-              "/trades"
-            );
-
-           
-
-          setCivilizations(
-            civResponse.data.civilizations
-          );
-
-          setAnalytics(
-            analyticsResponse.data.analytics
-          );
-
-          setWars(
-            warsResponse.data.wars
-          );
-
-          setAlliances(
-            alliancesResponse.data.alliances
-          );
-
-          setTrades(
-            tradesResponse.data.trades
-          );
-
-        } catch (error) {
-          console.error(error);
-        }
-      };
-
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  console.log("Wars:", wars);
-console.log("Trades:", trades);
+  const worldCivs = filterWorldCivilizations(civilizations, worldId);
+
+  if (!worldId) {
+    return (
+      <Layout>
+        <div className="text-center py-20">
+          <p className="text-slate-400 mb-4">No active world selected.</p>
+          <button
+            onClick={() => navigate("/create-world")}
+            className="px-6 py-3 bg-cyan-600 rounded-xl font-bold"
+          >
+            Create World
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Layout>
+        <LoadingState label="Charting Star Systems..." />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-
-      <h1
-        className="
-        text-5xl
-        font-bold
-        text-cyan-400
-        mb-10
-        "
-      >
-        Galaxy Map
-      </h1>
-
-      {/* Analytics */}
+      <header className="mb-8">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-500/70 mb-2">
+          Sector Navigation · Live Star Chart
+        </p>
+        <h1 className="text-4xl font-black text-cyan-300">Galaxy Map</h1>
+        <p className="text-slate-400 mt-2">
+          Pan, zoom, and inspect star systems. Colonize unclaimed worlds.
+        </p>
+      </header>
 
       {analytics && (
-
-        <div
-          className="
-          grid
-          md:grid-cols-2
-          xl:grid-cols-4
-          gap-4
-          mb-10
-          "
-        >
-
-          <div className="bg-slate-900 p-4 rounded-xl">
-            <div className="text-2xl">🏆</div>
-
-            <p className="text-gray-400">
-              Strongest
-            </p>
-
-            <h3
-              className="
-              font-bold
-              text-cyan-400
-              "
+        <div className="grid md:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: "Strongest", value: analytics.strongestCivilization, cls: "text-cyan-400" },
+            { label: "Richest", value: analytics.richestCivilization, cls: "text-green-400" },
+            { label: "Most Advanced", value: analytics.mostAdvancedCivilization, cls: "text-purple-400" },
+            { label: "Largest Pop", value: analytics.largestPopulation, cls: "text-yellow-400" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-center"
             >
-              {analytics.strongestCivilization}
-            </h3>
-          </div>
-
-          <div className="bg-slate-900 p-4 rounded-xl">
-            <div className="text-2xl">💰</div>
-
-            <p className="text-gray-400">
-              Richest
-            </p>
-
-            <h3
-              className="
-              font-bold
-              text-green-400
-              "
-            >
-              {analytics.richestCivilization}
-            </h3>
-          </div>
-
-          <div className="bg-slate-900 p-4 rounded-xl">
-            <div className="text-2xl">🚀</div>
-
-            <p className="text-gray-400">
-              Most Advanced
-            </p>
-
-            <h3
-              className="
-              font-bold
-              text-purple-400
-              "
-            >
-              {analytics.mostAdvancedCivilization}
-            </h3>
-          </div>
-
-          <div className="bg-slate-900 p-4 rounded-xl">
-            <div className="text-2xl">👥</div>
-
-            <p className="text-gray-400">
-              Largest Population
-            </p>
-
-            <h3
-              className="
-              font-bold
-              text-yellow-400
-              "
-            >
-              {analytics.largestPopulation}
-            </h3>
-          </div>
-
+              <div className="text-[10px] uppercase text-slate-500">
+                {item.label}
+              </div>
+              <div className={`font-bold mt-1 text-sm ${item.cls}`}>
+                {item.value ?? "—"}
+              </div>
+            </div>
+          ))}
         </div>
-
       )}
 
-      {/* Civilizations */}
-{/* Galaxy Map */}
+      <GalaxyMapCanvas
+        galaxy={galaxy}
+        civilizations={civilizations}
+        wars={wars}
+        trades={trades}
+        worldId={worldId}
+        onRefresh={fetchData}
+      />
 
-<div
-  className="
-  relative
-  h-[900px]
-  rounded-xl
-  border
-  border-cyan-500/20
-  bg-slate-950
-  overflow-hidden
-  mb-12
-  "
->
+      <div className="grid lg:grid-cols-3 gap-6 mt-8">
+        <HudPanel title="Empires in Sector" accent="cyan">
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {worldCivs.length === 0 ? (
+              <p className="text-slate-500 text-sm">No civilizations yet.</p>
+            ) : (
+              worldCivs.map((civ) => (
+                <button
+                  key={civ.id}
+                  onClick={() => navigate(`/empire/${civ.id}`)}
+                  className="w-full text-left p-2 rounded bg-slate-950/50 border border-slate-800 hover:border-cyan-500/30 transition text-sm"
+                >
+                  <span className="text-cyan-300 font-bold">
+                    {civ.species.name}
+                  </span>
+                  <span className="text-slate-500 ml-2 text-xs">
+                    Pop {civ.species.population}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </HudPanel>
 
-  {/* Stars */}
+        <HudPanel title="Recent Wars" accent="red">
+          <div className="space-y-2 max-h-48 overflow-y-auto text-xs">
+            {wars.slice(0, 5).map((war) => (
+              <div
+                key={war.id}
+                className="p-2 rounded bg-slate-950/50 border border-red-900/30"
+              >
+                Year {war.year} · Winner: {war.winner?.slice(0, 8) ?? "—"}
+              </div>
+            ))}
+            {wars.length === 0 && (
+              <p className="text-slate-500">No wars recorded.</p>
+            )}
+          </div>
+        </HudPanel>
 
-  {Array.from({ length: 120 }).map(
-    (_, i) => (
-
-      <div
-        key={i}
-        className="
-        absolute
-        text-white
-        opacity-40
-        pointer-events-none
-        "
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-        }}
-      >
-        ✦
+        <HudPanel title="Alliances & Trade" accent="green">
+          <div className="text-xs space-y-2">
+            <p className="text-slate-400">
+              {alliances.length} alliance(s) · {trades.length} trade route(s)
+            </p>
+          </div>
+        </HudPanel>
       </div>
-
-    )
-  )}
-
-  <svg
-  className="
-  absolute
-  inset-0
-  w-full
-  h-full
-  "
->
-
-  <line
-    x1="20%"
-    y1="20%"
-    x2="50%"
-    y2="50%"
-    stroke="#00ff88"
-    strokeWidth="2"
-  />
-
-  <line
-    x1="50%"
-    y1="50%"
-    x2="75%"
-    y2="20%"
-    stroke="#00ff88"
-    strokeWidth="2"
-  />
-
-  <line
-    x1="20%"
-    y1="20%"
-    x2="75%"
-    y2="20%"
-    stroke="#ff3333"
-    strokeWidth="3"
-  />
-
-</svg>
-
-  {/* Civilizations */}
-
-  {civilizations.map(
-  (civ, index) => {
-
-    const power =
-      civ.species.population +
-      (civ.technology?.level || 0) * 100;
-
-    const tier =
-      power > 1000
-        ? "Galactic Empire"
-        : power > 500
-        ? "Spacefaring"
-        : "Primitive";
-
-    return (
-
-      <div
-        key={civ.id}
-        onClick={() =>
-          setSelectedCivilization(civ)
-        }
-        className="
-        absolute
-        text-center
-        cursor-pointer
-        hover:scale-110
-        transition
-        "
-        style={{
-          left: `${15 + index * 25}%`,
-          top: `${15 + (index % 2) * 35}%`,
-        }}
-      >
-
-        <div
-          className="
-          text-7xl
-          drop-shadow-lg
-          "
-        >
-          {
-            civ.technology?.level >= 8
-              ? "🚀"
-              : getSpeciesIcon(
-                  civ.species.name
-                )
-          }
-        </div>
-
-        <div
-          className="
-          text-purple-400
-          text-xs
-          uppercase
-          "
-        >
-          {tier}
-        </div>
-
-        <div
-          className="
-          mt-2
-          text-cyan-400
-          font-bold
-          text-xl
-          "
-        >
-          {civ.species.name}
-        </div>
-
-        <div
-          className="
-          text-sm
-          text-gray-400
-          "
-        >
-          Pop: {civ.species.population}
-        </div>
-
-        <div
-          className="
-          text-yellow-400
-          text-sm
-          "
-        >
-          <div
-  className={
-    power > 500
-      ? "text-red-400 text-sm"
-      : power > 200
-      ? "text-yellow-400 text-sm"
-      : "text-green-400 text-sm"
-  }
->
-  Power: {power}
-</div>
-
-<div className="mt-2">
-
-  {power > 500 && (
-    <span
-      className="
-      bg-red-500/20
-      text-red-400
-      px-2
-      py-1
-      rounded
-      text-xs
-      "
-    >
-      DOMINANT EMPIRE
-    </span>
-  )}
-
-  {power > 200 &&
-    power <= 500 && (
-      <span
-        className="
-        bg-yellow-500/20
-        text-yellow-400
-        px-2
-        py-1
-        rounded
-        text-xs
-        "
-      >
-        RISING POWER
-      </span>
-  )}
-
-  {power <= 200 && (
-    <span
-      className="
-      bg-green-500/20
-      text-green-400
-      px-2
-      py-1
-      rounded
-      text-xs
-      "
-    >
-      DEVELOPING
-    </span>
-  )}
-
-</div>
-        </div>
-
-      </div>
-
-    );
-
-  }
-)}
-
-</div>
-
-      {/* Wars */}
-
-      <div className="mt-12">
-
-        <h2
-          className="
-          text-3xl
-          font-bold
-          text-red-400
-          mb-6
-          "
-        >
-          Active Wars
-        </h2>
-
-        <div
-          className="
-          grid
-          md:grid-cols-2
-          gap-4
-          "
-        >
-
-          {wars.slice(0, 5).map((war) => (
-
-            <div
-              key={war.id}
-              className="
-              bg-slate-900
-              p-4
-              rounded-xl
-              border
-              border-red-500/30
-              "
-            >
-
-              <p className="font-bold">
-                Year {war.year}
-              </p>
-
-              <p className="text-gray-400">
-                Winner:
-                {" "}
-                {war.winnerCivilizationId}
-              </p>
-
-            </div>
-
-          ))}
-
-        </div>
-
-      </div>
-
-      {/* Alliances */}
-
-      <div className="mt-12">
-
-        <h2
-          className="
-          text-3xl
-          font-bold
-          text-yellow-400
-          mb-6
-          "
-        >
-          Alliances
-        </h2>
-
-        <div
-          className="
-          grid
-          md:grid-cols-2
-          gap-4
-          "
-        >
-
-          {alliances.slice(0, 5).map((alliance) => (
-
-            <div
-              key={alliance.id}
-              className="
-              bg-slate-900
-              p-4
-              rounded-xl
-              border
-              border-yellow-500/30
-              "
-            >
-
-              <p className="font-bold">
-                Alliance Formed
-              </p>
-
-            </div>
-
-          ))}
-
-        </div>
-
-      </div>
-
-      {/* Trades */}
-
-      <div className="mt-12">
-
-        <h2
-          className="
-          text-3xl
-          font-bold
-          text-green-400
-          mb-6
-          "
-        >
-          Trade Network
-        </h2>
-
-        <div
-          className="
-          grid
-          md:grid-cols-2
-          gap-4
-          "
-        >
-
-          {trades.slice(0, 5).map((trade) => (
-
-            <div
-              key={trade.id}
-              className="
-              bg-slate-900
-              p-4
-              rounded-xl
-              border
-              border-green-500/30
-              "
-            >
-
-              <p className="font-bold">
-                Trade Route
-              </p>
-
-            </div>
-
-          ))}
-
-        </div>
-
-        
-
-      </div>
-
-
-        {
-  selectedCivilization && (
-
-    <CivilizationModal
-      civilization={
-        selectedCivilization
-      }
-      onClose={() =>
-        setSelectedCivilization(null)
-      }
-    />
-
-  )
-}
     </Layout>
   );
 }

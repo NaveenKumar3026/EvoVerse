@@ -21,6 +21,9 @@ import analyticsRoutes
 from "./routes/analytics.routes";
 import aiRoutes
   from "./routes/ai.routes";
+import decisionRoutes from "./routes/decision.routes";
+import starRoutes from "./routes/star.routes";
+import commanderRoutes from "./routes/commander.routes";
 
 const app = express();
 
@@ -82,6 +85,9 @@ app.use(
   "/api/statistics",
   statisticsRoutes
 );
+app.use("/api/decisions", decisionRoutes);
+app.use("/api/stars", starRoutes);
+app.use("/api/commander", commanderRoutes);
 
 const PORT = 5000;
 

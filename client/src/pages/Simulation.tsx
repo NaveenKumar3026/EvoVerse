@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import Layout from "../components/Layout";
+import DecisionModal from "../components/DecisionModal";
 
 function Simulation() {
 
@@ -15,6 +16,7 @@ function Simulation() {
 
   const [stats, setStats] =
     useState<any>(null);
+  const [pendingDecision, setPendingDecision] = useState<any | null>(null);
 
   const loadStats =
     async () => {
@@ -34,8 +36,25 @@ function Simulation() {
       );
     };
 
+    const fetchPendingDecision = async () => {
+      try {
+        const worldId = localStorage.getItem("worldId");
+        if (!worldId) return;
+        const res = await api.get(`/decisions/pending/${worldId}`);
+        const decisions = res.data.decisions as any[];
+        if (decisions && decisions.length > 0) {
+          setPendingDecision(decisions[0]);
+        } else {
+          setPendingDecision(null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch pending decisions", err);
+      }
+    };
+
   useEffect(() => {
     loadStats();
+    fetchPendingDecision();
   }, []);
 
   const runEvolution =
@@ -61,6 +80,9 @@ function Simulation() {
             years: yearsToRun,
           }
         );
+
+        // refresh and check for pending decisions created by the simulation
+        await fetchPendingDecision();
 
         setMessage(
           `Evolution advanced by ${yearsToRun} years`
@@ -354,6 +376,18 @@ function Simulation() {
 
         </div>
 
+      )}
+
+      {pendingDecision && (
+        <DecisionModal
+          decision={pendingDecision}
+          onClose={() => setPendingDecision(null)}
+          onResolved={async () => {
+            await loadStats();
+            await fetchPendingDecision();
+            setPendingDecision(null);
+          }}
+        />
       )}
 
     </Layout>

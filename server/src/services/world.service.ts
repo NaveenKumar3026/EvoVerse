@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma";
+import { generateGalaxyForWorld } from "./star.service";
 
 const planetTypes = [
   "Temperate",
@@ -37,6 +38,9 @@ export const createWorld = async (
       userId
     }
   });
+
+  // Generate galaxy for this world
+  await generateGalaxyForWorld(world.id);
 
   return world;
 };

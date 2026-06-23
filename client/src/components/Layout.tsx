@@ -1,5 +1,6 @@
 import Sidebar from "./Sidebar";
 import Starfield from "./Starfield";
+import GameHUD from "./GameHUD";
 
 type Props = {
   children: React.ReactNode;
@@ -21,16 +22,13 @@ function Layout({
 
       <Starfield />
 
+      <GameHUD />
+
       <div className="flex">
 
         <Sidebar />
 
-        <main
-          className="
-          flex-1
-          p-8
-          "
-        >
+        <main className="flex-1 p-8 animate-panel-enter">
           {children}
         </main>
 

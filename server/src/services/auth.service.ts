@@ -34,6 +34,15 @@ export const registerUser = async ({
       username,
       email,
       password: hashedPassword,
+      commander: {
+        create: {
+          name: username,
+          rank: "Bronze",
+          xp: 0,
+          reputation: 100,
+          achievementsJson: "[]"
+        }
+      }
     },
   });
 

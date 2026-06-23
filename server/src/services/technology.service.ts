@@ -1,15 +1,82 @@
 import { prisma } from "../config/prisma";
 
-const eras = [
-  "Stone Age",
-  "Bronze Age",
-  "Iron Age",
-  "Medieval Age",
-  "Industrial Age",
-  "Digital Age",
-  "Space Age",
-  "Interstellar Age",
-];
+export interface TechNode {
+  name: string;
+  era: string;
+  cost: number;
+  prerequisites: string[];
+  effects: {
+    productionMultiplier?: number;
+    militaryPowerBonus?: number;
+    fleetStrengthBonus?: number;
+  };
+}
+
+export const TECH_TREE: Record<string, TechNode> = {
+  "Primitive Tools": {
+    name: "Primitive Tools",
+    era: "Stone Age",
+    cost: 5,
+    prerequisites: [],
+    effects: { productionMultiplier: 1.1, militaryPowerBonus: 15 }
+  },
+  "Agriculture": {
+    name: "Agriculture",
+    era: "Bronze Age",
+    cost: 15,
+    prerequisites: ["Primitive Tools"],
+    effects: { productionMultiplier: 1.3 }
+  },
+  "Industry": {
+    name: "Industry",
+    era: "Industrial Age",
+    cost: 30,
+    prerequisites: ["Agriculture"],
+    effects: { productionMultiplier: 1.6, militaryPowerBonus: 40 }
+  },
+  "Electricity": {
+    name: "Electricity",
+    era: "Digital Age",
+    cost: 50,
+    prerequisites: ["Industry"],
+    effects: { productionMultiplier: 2.0 }
+  },
+  "Computers": {
+    name: "Computers",
+    era: "Digital Age",
+    cost: 70,
+    prerequisites: ["Electricity"],
+    effects: { productionMultiplier: 2.5, fleetStrengthBonus: 20 }
+  },
+  "Space Travel": {
+    name: "Space Travel",
+    era: "Space Age",
+    cost: 90,
+    prerequisites: ["Computers"],
+    effects: { productionMultiplier: 3.0, fleetStrengthBonus: 50 }
+  },
+  "Interstellar Travel": {
+    name: "Interstellar Travel",
+    era: "Interstellar Age",
+    cost: 110,
+    prerequisites: ["Space Travel"],
+    effects: { productionMultiplier: 4.0, fleetStrengthBonus: 100 }
+  },
+  "Quantum Technology": {
+    name: "Quantum Technology",
+    era: "Interstellar Age",
+    cost: 130,
+    prerequisites: ["Interstellar Travel"],
+    effects: { productionMultiplier: 5.0, militaryPowerBonus: 150 }
+  },
+  "Transcendent Technology": {
+    name: "Transcendent Technology",
+    era: "Transcendent Age",
+    cost: 160,
+    prerequisites: ["Quantum Technology"],
+    effects: { productionMultiplier: 7.0, militaryPowerBonus: 300, fleetStrengthBonus: 250 }
+  }
+};
 
 export const advanceTechnology = async (
   civilizationId: string,
@@ -17,114 +84,89 @@ export const advanceTechnology = async (
   worldId: string,
   year: number
 ) => {
+  const civilization = await prisma.civilization.findUnique({
+    where: { id: civilizationId },
+    include: { technology: true }
+  });
 
-  console.log(
-    "TECH CALLED",
-    civilizationId,
-    intelligence
-  );
-
-  let technology =
-    await prisma.technology.findUnique({
-      where: {
-        civilizationId,
-      },
-    });
-
-  console.log(
-    "FOUND TECHNOLOGY:",
-    technology
-  );
-
-  // Create technology if it doesn't exist
-
-  if (!technology) {
-
-    try {
-
-      technology =
-        await prisma.technology.create({
-          data: {
-            civilizationId,
-            level: 1,
-            era: eras[0],
-          },
-        });
-
-      console.log(
-        "TECH CREATED:",
-        technology
-      );
-
-      await prisma.evolutionHistory.create({
-  data: {
-    worldId,
-    year,
-    eventType: "TECHNOLOGY_STARTED",
-    description:
-      `Technology era started: ${eras[0]}`,
-  },
-});
-
-      return technology;
-
-    } catch (error) {
-
-      console.error(
-        "TECH CREATE ERROR:",
-        error
-      );
-
-      throw error;
-    }
+  if (!civilization) {
+    throw new Error("Civilization not found");
   }
 
-  // Technology advancement
+  // Parse currently unlocked technologies
+  let unlockedTechs: string[] = [];
+  try {
+    unlockedTechs = JSON.parse(civilization.technologiesJson || "[]");
+  } catch {
+    unlockedTechs = [];
+  }
 
-  const chance =
-    intelligence / 100;
+  // Find all researchable technologies (prerequisites met and not already unlocked)
+  const researchable = Object.values(TECH_TREE).filter(node => {
+    if (unlockedTechs.includes(node.name)) return false;
+    return node.prerequisites.every(prereq => unlockedTechs.includes(prereq));
+  });
+
+  if (researchable.length === 0) {
+    return civilization.technology;
+  }
+
+  // Select one random researchable node to attempt
+  const targetNode = researchable[Math.floor(Math.random() * researchable.length)];
+
+  // Success chance is based on intelligence relative to the cost
+  const chance = Math.max(0.05, Math.min(0.95, (intelligence / targetNode.cost)));
 
   if (Math.random() < chance) {
+    unlockedTechs.push(targetNode.name);
 
-    const nextLevel =
-      Math.min(
-        technology.level + 1,
-        eras.length
-      );
+    // Apply effects
+    let milBonus = targetNode.effects.militaryPowerBonus ?? 0;
+    let fleetBonus = targetNode.effects.fleetStrengthBonus ?? 0;
 
-    if (
-      nextLevel >
-      technology.level
-    ) {
+    await prisma.civilization.update({
+      where: { id: civilizationId },
+      data: {
+        technologiesJson: JSON.stringify(unlockedTechs),
+        militaryPower: { increment: milBonus },
+        fleetStrength: { increment: fleetBonus }
+      }
+    });
 
-      technology =
-        await prisma.technology.update({
-          where: {
-            id: technology.id,
-          },
+    // Sync with legacy Technology model
+    let technology = civilization.technology;
+    const nextLevel = unlockedTechs.length;
 
-          data: {
-            level: nextLevel,
-            era: eras[nextLevel - 1],
-          },
-        });
-
-      console.log(
-        "TECH ADVANCED:",
-        technology
-      );
-
-      await prisma.evolutionHistory.create({
-  data: {
-    worldId,
-    year,
-    eventType: "TECHNOLOGY_ADVANCED",
-    description:
-      `Civilization entered ${eras[nextLevel - 1]}`,
-  },
-});
+    if (!technology) {
+      technology = await prisma.technology.create({
+        data: {
+          civilizationId,
+          level: nextLevel,
+          era: targetNode.era
+        }
+      });
+    } else {
+      technology = await prisma.technology.update({
+        where: { id: technology.id },
+        data: {
+          level: nextLevel,
+          era: targetNode.era
+        }
+      });
     }
+
+    // Log history event
+    await prisma.evolutionHistory.create({
+      data: {
+        worldId,
+        year,
+        eventType: "TECHNOLOGY_ADVANCED",
+        description: `${civilizationId} successfully researched "${targetNode.name}" and entered the ${targetNode.era}`
+      }
+    });
+
+    return technology;
   }
 
-  return technology;
+  return civilization.technology;
 };

@@ -14,6 +14,7 @@ model User {
   password  String
 
   worlds    World[]
+  commander Commander?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -33,6 +34,7 @@ model World {
   currentEra        String   @default("Primitive")
 
   disasterFrequency Int      @default(10)
+  season            String   @default("Season 1: Rise of Civilizations")
 
   userId            String
   user              User     @relation(fields: [userId], references: [id])
@@ -42,6 +44,8 @@ model World {
   history           EvolutionHistory[]
 
   disasters DisasterEvent[]
+  starSystems StarSystem[]
+  decisions   PlayerDecision[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -125,6 +129,11 @@ model Civilization {
   technology Technology?
   resource Resource?
 
+  militaryPower      Int      @default(100)
+  fleetStrength      Int      @default(10)
+  technologiesJson   String   @default("[]")
+  planets            Planet[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -185,6 +194,8 @@ model War {
   winner String
 
   year Int
+  status String @default("Active")
+  conquestPlanetId String?
 
   createdAt DateTime @default(now())
 }
@@ -196,6 +207,10 @@ model Diplomacy {
   civilizationBId String
 
   relationship String @default("Neutral")
+  treatyType   String @default("None")
+  embassy      Boolean @default(false)
+  rivalry      Boolean @default(false)
+  sanctions    Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -221,4 +236,50 @@ model Trade {
   amount Int
 
   createdAt DateTime @default(now())
+}
+
+model Commander {
+  id               String   @id @default(uuid())
+  name             String
+  rank             String   @default("Bronze")
+  xp               Int      @default(0)
+  reputation       Int      @default(100)
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  achievementsJson String   @default("[]")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model StarSystem {
+  id       String   @id @default(uuid())
+  name     String
+  x        Int
+  y        Int
+  worldId  String
+  world    World    @relation(fields: [worldId], references: [id])
+  planets  Planet[]
+}
+
+model Planet {
+  id           String        @id @default(uuid())
+  name         String
+  type         String
+  resources    String
+  starSystemId String
+  starSystem   StarSystem    @relation(fields: [starSystemId], references: [id])
+  ownerId      String?
+  owner        Civilization? @relation(fields: [ownerId], references: [id])
+}
+
+model PlayerDecision {
+  id          String    @id @default(uuid())
+  worldId     String
+  world       World     @relation(fields: [worldId], references: [id])
+  year        Int
+  title       String
+  description String
+  optionsJson String
+  choiceMade  Int       @default(-1)
+  resolvedAt  DateTime?
 }
